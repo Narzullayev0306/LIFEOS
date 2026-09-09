@@ -15,6 +15,8 @@ export async function GET() {
       id: true,
       email: true,
       name: true,
+      avatar: true,
+      bio: true,
       createdAt: true,
       settings: true,
       timeSchedule: true,
@@ -33,17 +35,44 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, password, settings, timeSchedule } = body;
+    const { name, avatar, bio, password, settings, timeSchedule } = body;
 
-    const updateData: { name?: string; passwordHash?: string } = {};
-    if (name) updateData.name = name.trim();
+    const updateData: {
+      name?: string;
+      avatar?: string | null;
+      bio?: string | null;
+      passwordHash?: string;
+    } = {};
+
+    if (name !== undefined) {
+      if (!name.trim()) {
+        return NextResponse.json({ error: 'Ism bo‘sh bo‘lishi mumkin emas' }, { status: 400 });
+      }
+      updateData.name = name.trim();
+    }
+
+    if (avatar !== undefined) {
+      updateData.avatar = avatar;
+    }
+
+    if (bio !== undefined) {
+      updateData.bio = bio ? bio.trim() : null;
+    }
+
     if (password && password.length >= 6) {
       updateData.passwordHash = await hashPassword(password);
     }
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: session.id },
       data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        bio: true,
+      },
     });
 
     if (settings) {
@@ -90,7 +119,11 @@ export async function PUT(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, message: 'Profil muvaffaqiyatli yangilandi' });
+    return NextResponse.json({
+      success: true,
+      message: 'Profil muvaffaqiyatli yangilandi',
+      user: updatedUser,
+    });
   } catch (error) {
     console.error('Profile update error:', error);
     return NextResponse.json({ error: 'Profilni saqlashda xatolik yuz berdi' }, { status: 500 });

@@ -14,6 +14,8 @@ export async function GET() {
       id: true,
       email: true,
       name: true,
+      avatar: true,
+      bio: true,
       settings: true,
       timeSchedule: true,
       topikGoal: true,

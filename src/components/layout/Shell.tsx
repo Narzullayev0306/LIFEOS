@@ -32,6 +32,39 @@ export default function Shell({ children }: ShellProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [unreadNotifications, setUnreadNotifications] = useState(2);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    name: string;
+    email: string;
+    avatar?: string | null;
+  } | null>(null);
+
+  const fetchUserData = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUserProfile(data.user);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+    const handleProfileUpdated = () => fetchUserData();
+    window.addEventListener('lifeos_profile_updated', handleProfileUpdated);
+    return () => window.removeEventListener('lifeos_profile_updated', handleProfileUpdated);
+  }, []);
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'OS';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     const savedTheme = (localStorage.getItem('lifeos_theme') as 'dark' | 'light') || 'dark';
@@ -158,30 +191,70 @@ export default function Shell({ children }: ShellProps) {
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-primary-light)',
-                color: 'var(--accent-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-              }}
-            >
-              AN
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                Azizbek
+          <Link
+            href="/profile"
+            title="Profilni tahrirlash"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              textDecoration: 'none',
+              overflow: 'hidden',
+              flex: 1,
+            }}
+          >
+            {userProfile?.avatar ? (
+              <img
+                src={userProfile.avatar}
+                alt={userProfile.name || 'Foydalanuvchi'}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--accent-primary)',
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--accent-primary-light)',
+                  color: 'var(--accent-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  flexShrink: 0,
+                }}
+              >
+                {getInitials(userProfile?.name)}
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--accent-success)' }}>● Faol</div>
+            )}
+            <div style={{ overflow: 'hidden', textAlign: 'left' }}>
+              <div
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '120px',
+                }}
+              >
+                {userProfile?.name || 'Foydalanuvchi'}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--accent-success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-success)', display: 'inline-block' }}></span>
+                Faol
+              </div>
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             title="Chiqish"
@@ -192,6 +265,7 @@ export default function Shell({ children }: ShellProps) {
               cursor: 'pointer',
               padding: '0.4rem',
               borderRadius: 'var(--radius-sm)',
+              flexShrink: 0,
             }}
           >
             <LogOut size={18} />
@@ -339,6 +413,66 @@ export default function Shell({ children }: ShellProps) {
                 </div>
               )}
             </div>
+
+            {/* Profile Avatar Quick Link */}
+            <Link
+              href="/profile"
+              title={`${userProfile?.name || 'Profil'} sozlamalari`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '3px 8px 3px 3px',
+                borderRadius: 'var(--radius-full, 9999px)',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-subtle)',
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {userProfile?.avatar ? (
+                <img
+                  src={userProfile.avatar}
+                  alt={userProfile.name || 'Profil'}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--accent-primary-light)',
+                    color: 'var(--accent-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  {getInitials(userProfile?.name)}
+                </div>
+              )}
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  maxWidth: '90px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {userProfile?.name?.split(' ')[0] || 'Profil'}
+              </span>
+            </Link>
           </div>
         </header>
 
