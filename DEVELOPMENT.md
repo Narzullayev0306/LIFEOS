@@ -1,35 +1,48 @@
-# LIFEOS — Developer Guide
+# LIFEOS — Development Guide
 
-## 1. Environment Setup
+## Development Principle
 
-### Prerequisites
-- **Node.js**: v18.17.0+ (Tested on v22.x)
-- **npm**: v9.0.0+ (Tested on v10.x)
-- **Git**: Installed and configured
+Work from the repository, not from assumptions.
 
-### Installation & Initialization
-```bash
-# Clone the repository
-git clone https://github.com/Narzullayev0306/LIFEOS.git
-cd LIFEOS
+Before changing code:
 
-# Install dependencies
-npm install
-
-# Create local environment configuration
-cp .env.example .env
-
-# Generate Prisma Client and sync SQLite database
-npx prisma generate
-npm run db:push
-
-# Populate database with rich seed data (TOPIK vocabulary, grammar, categories, demo user)
-npm run db:seed
-```
+1. Read `AGENTS.md`.
+2. Read `TASKS.md`.
+3. Read `PRODUCT_SPEC.md`.
+4. Read `ARCHITECTURE.md` when making structural changes.
+5. Inspect `package.json` and the relevant source files.
 
 ---
 
-## 2. Standard Development Scripts
+## Autonomous Development Loop
+
+Use:
+
+`READ → PLAN → IMPLEMENT → TEST → FIX → VERIFY → DOCUMENT → NEXT`
+
+Do not stop simply because one feature is complete.
+
+---
+
+## Validation
+
+Use only commands actually defined by the project. Inspect `package.json` first.
+
+At minimum, meaningful changes should be validated with the relevant combination of:
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+Run lint when a lint script exists.
+
+If a command fails because of code introduced by the current change, fix it before moving on.
+
+---
+
+## Standard Development Scripts
 
 | Command | Action |
 |---|---|
@@ -45,50 +58,56 @@ npm run db:seed
 
 ---
 
-## 3. Database Management
+## Database
 
-### Prisma SQLite Configuration
-The database URL is configured in `.env`:
-```env
-DATABASE_URL="file:./lifeos.db"
-```
-The SQLite database file `lifeos.db` is stored locally in the project root and is excluded from git tracking via `.gitignore`.
+The application uses Prisma with SQLite according to the current project configuration.
 
-### Making Schema Modifications
-1. Edit `prisma/schema.prisma`.
-2. Run `npx prisma db push` to synchronize changes to `lifeos.db`.
-3. Run `npx prisma generate` to refresh `@prisma/client` types.
-4. If seed data is affected, update `prisma/seed.ts` and re-run `npm run db:seed`.
+Do not commit local database files, credentials or generated secrets.
+
+When changing the Prisma schema, verify the affected application code and tests together.
 
 ---
 
-## 4. Coding Conventions & Best Practices
+## API and Security
 
-1. **TypeScript Strict Mode**:
-   - Every function and parameter must have explicit types.
-   - Avoid `any` where possible; use interfaces and enums/union types.
-2. **Pure Deterministic Calculations**:
-   - All financial, schedule, discipline, and SM-2 calculations must remain in `src/lib/calculations/` as pure, side-effect-free functions.
-   - Every calculation engine must have corresponding test coverage in `tests/`.
-3. **Vanilla CSS Design System**:
-   - Use CSS variables defined in `src/styles/globals.css`.
-   - Never introduce TailwindCSS classes unless explicitly required by user configuration.
-   - All interactive elements must maintain responsive styles across desktop ($\ge 1024\text{px}$), tablet ($640\text{px} - 1023\text{px}$), and mobile ($\le 639\text{px}$).
-4. **Authentication & Session**:
-   - Always retrieve the current authenticated user via `getCurrentUser()` from `src/lib/session.ts` in API routes.
-   - Guard user data strictly: queries must filter by `userId: session.id`.
+Validate input at API boundaries.
+Verify authorization server-side for protected resources.
+Do not expose secrets to the browser.
+Treat AI prompts, user text and external content as untrusted input.
 
 ---
 
-## 5. Running Automated Tests
+## UI Development
 
-```bash
-# Run all unit and calculation tests
-npm test
+Test important flows at mobile, tablet and desktop widths.
+Avoid horizontal overflow.
+Check loading, empty, error and success states.
+Prefer accessible semantic controls and keyboard-friendly interactions.
 
-# Expected Output:
-# ✓ tests/calculations.test.ts (14 tests)
-# ✓ tests/auth.test.ts (3 tests)
-# Test Files: 2 passed (2)
-# Tests:      17 passed (17)
-```
+---
+
+## Git Workflow
+
+Use focused commits with clear messages.
+
+Examples:
+- `feat: add task conflict detection`
+- `fix: prevent overlapping time blocks`
+- `test: cover finance edge cases`
+- `docs: update architecture guide`
+
+Keep `TASKS.md` synchronized with real implementation status.
+Do not mark work `[x]` without verification.
+
+---
+
+## Completion Standard
+
+A feature is complete only when:
+- implementation exists
+- affected tests pass
+- typechecking passes where applicable
+- production build passes when applicable
+- responsive behavior is checked for UI changes
+- documentation is updated when needed
+- `TASKS.md` reflects the verified state

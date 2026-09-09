@@ -1,42 +1,79 @@
-# LIFEOS — Antigravity Agent Configuration & Protocols
+# LIFEOS — Antigravity Autonomous Execution Guide
 
-## Mission Overview
+## Purpose
 
-Antigravity operates as the Autonomous Lead Engineer for LIFEOS.
-The objective is to continuously develop, verify, test, and maintain LIFEOS as a complete, high-performance Personal Operating System.
+This repository is designed to be worked on autonomously from Antigravity using `/goal`.
 
----
+`/goal` is an Antigravity execution command, not a GitHub command. GitHub stores the repository, backlog, commits and pull requests; Antigravity is responsible for running the local development workflow.
 
-## 1. Autonomous Loop Protocol
+## Start Command
 
-For each task or requirement:
+Run `/goal` in Antigravity and use this objective:
 
-$$\text{READ} \longrightarrow \text{AUDIT} \longrightarrow \text{PLAN} \longrightarrow \text{IMPLEMENT} \longrightarrow \text{TEST} \longrightarrow \text{FIX} \longrightarrow \text{VERIFY} \longrightarrow \text{UPDATE TASKS.md} \longrightarrow \text{NEXT TASK}$$
+```text
+Read AGENTS.md, TASKS.md, README.md, ARCHITECTURE.md, DEVELOPMENT.md and PRODUCT_SPEC.md.
 
-### Rules of Engagement:
-1. **Never Fake Completion**: A task may only be marked completed `[x]` after real implementation, passing tests, and typecheck/build verification.
-2. **Deterministic Calculations**: Keep calculations pure, deterministic, and backed by automated unit tests.
-3. **Continuous Execution**: Continue to the next task automatically without pausing for non-blocking decisions.
-4. **Safety Safeguards**: AI recommendations that perform consequential changes must require interactive user confirmation before data mutations occur.
-5. **Quality Gate**: The only stopping condition is when all applicable tasks are complete, all tests pass, the production build succeeds, and the working tree is clean.
+You are the autonomous lead engineer for LIFEOS.
 
----
+Implement the repository completely according to TASKS.md and the product rules in PRODUCT_SPEC.md.
 
-## 2. Key Commands Reference
+Use this loop continuously:
+READ → AUDIT → PLAN → IMPLEMENT → TEST → FIX → VERIFY → UPDATE TASKS.md → NEXT TASK
+
+Do not stop after one task or one phase.
+Do not ask for confirmation for normal engineering decisions.
+Ask only for genuine blockers such as missing credentials, contradictory requirements, unavailable external services, or irreversible destructive actions.
+
+Never mark a task complete without real verification.
+Inspect package.json before choosing commands.
+Run the project's available lint, typecheck, tests and production build as appropriate.
+Fix failures before continuing.
+Keep GitHub Issues aligned with TASKS.md.
+Never commit secrets.
+
+Continue until all applicable TASKS.md items are implemented and verified, validation passes, the production build succeeds, and no known critical bug remains.
+
+Start now.
+```
+
+## Execution Rules
+
+1. `TASKS.md` is the implementation checklist.
+2. `AGENTS.md` contains the autonomous engineering policy.
+3. `PRODUCT_SPEC.md` defines the intended product behavior.
+4. `ARCHITECTURE.md` describes the technical structure.
+5. `DEVELOPMENT.md` contains local development and validation guidance.
+6. Never invent completion status.
+7. Preserve working functionality unless a justified change is required.
+8. Prefer small, verifiable changes over large rewrites.
+9. Update documentation when behavior or architecture changes.
+
+## GitHub Relationship
+
+Use GitHub for:
+- source control
+- issues and backlog
+- commits
+- pull requests
+- code review
+- CI results
+
+Use Antigravity for:
+- local code editing
+- dependency installation
+- running development commands
+- tests
+- linting
+- typechecking
+- production builds
+- browser/application verification
+
+Do not treat a GitHub commit as proof that the application works. Verification must come from actual validation.
+
+## Key Commands Reference
 
 - **Test Suite**: `npm test` (`vitest run`)
 - **Type Check**: `npm run typecheck` (`tsc --noEmit`)
 - **Production Build**: `npm run build` (`next build`)
 - **Database Push**: `npm run db:push` (`prisma db push`)
 - **Database Seed**: `npm run db:seed` (`tsx prisma/seed.ts`)
-
----
-
-## 3. Core Principles & Philosophy
-
-$$\text{TIME} \longrightarrow \text{TASKS} \longrightarrow \text{STUDY (TOPIK)} \longrightarrow \text{HABITS} \longrightarrow \text{GOALS} \longrightarrow \text{MONEY} \longrightarrow \text{DISCIPLINE} \longrightarrow \text{AI}$$
-
-- **Time Protection**: Protect sleep, rest periods, and immutable fixed commitments.
-- **Measurable Progress**: Connect daily micro-actions to macro life goals and TOPIK scores.
-- **Financial Stability**: Enforce dynamic limits to guarantee month-end financial solvency.
-- **Aesthetic Excellence**: Provide modern, responsive, glassmorphic UI with zero horizontal overflow and seamless touch targets.

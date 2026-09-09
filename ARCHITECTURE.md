@@ -1,8 +1,27 @@
-# LIFEOS — Architectural Blueprint
+# LIFEOS — Architecture Guide
 
-## 1. System Overview
+## Architectural Goal
 
-LIFEOS is architected as a fullstack TypeScript web application built on Next.js 15 (App Router), React 19, SQLite with Prisma ORM, and modern Vanilla CSS design tokens.
+LIFEOS is a modular personal operating system built around a shared user context: time, tasks, study, habits, goals, money and AI recommendations.
+
+The architecture remains incremental and cohesive.
+
+---
+
+## Current Stack
+
+- **Framework**: Next.js 15 (App Router), React 19
+- **Language**: TypeScript (Strict Mode)
+- **Database & ORM**: SQLite (`file:./lifeos.db`) with Prisma ORM
+- **Authentication**: JWT-based session cookies with `bcryptjs` password hashing and `jose`
+- **Testing**: Vitest for unit, calculation, and security suites
+- **Styling**: Vanilla CSS with design-token architecture, dark/light themes, and glassmorphism
+
+The exact versions and scripts are defined by `package.json` and are authoritative.
+
+---
+
+## Application Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -48,111 +67,68 @@ LIFEOS is architected as a fullstack TypeScript web application built on Next.js
                  └──────────────────────────┘
 ```
 
----
+### 1. App Layer (`src/app`)
+Contains pages, layouts and backend API routes:
+- Pages: Dashboard (`/`), Planner (`/planner`), TOPIK (`/topik`), Habits (`/habits`), Finance (`/finance`), Goals (`/goals`), AI (`/ai`), Profile (`/profile`), Onboarding (`/onboarding`), Login (`/login`), Register (`/register`).
+- APIs: 23 secure endpoints handling business actions, mutations, and aggregated queries.
 
-## 2. Directory Structure & Module Boundaries
+### 2. Components Layer (`src/components`)
+Contains reusable UI components, mobile and desktop layouts (`Shell.tsx`). Business calculations are isolated from presentation components.
 
-```
-src/
-├── app/                        # Next.js App Router (Pages & API endpoints)
-│   ├── api/
-│   │   ├── ai/analyze/         # AI Decision Support API
-│   │   ├── auth/               # Register, Login, Logout, Me
-│   │   ├── dashboard/          # Aggregated dashboard metrics endpoint
-│   │   ├── discipline/history/ # 7-day trend calculation
-│   │   ├── finance/            # Expense, Income, Budget, Goals
-│   │   ├── goals/              # OKR & Milestone endpoints
-│   │   ├── habits/             # Habits CRUD & Toggle endpoints
-│   │   ├── notifications/      # Reminder & notification feeds
-│   │   ├── onboarding/         # Setup wizard submission
-│   │   ├── planner/recalculate/# Schedule re-balancing endpoint
-│   │   ├── profile/            # User profile & settings
-│   │   ├── tasks/              # Task CRUD & status updates
-│   │   └── topik/              # Vocab, Review (SM-2), Grammar, Writing, Session
-│   ├── ai/page.tsx             # AI Decision Support UI
-│   ├── finance/page.tsx        # Finance Management UI
-│   ├── goals/page.tsx          # Goals & OKR UI
-│   ├── habits/page.tsx         # Habits & Discipline UI
-│   ├── login/page.tsx          # Authentication Login UI
-│   ├── onboarding/page.tsx     # 5-Step Setup Wizard UI
-│   ├── page.tsx                # Unified Dashboard UI
-│   ├── planner/page.tsx        # Interactive Daily Planner UI
-│   ├── profile/page.tsx        # Profile & System Configuration UI
-│   ├── register/page.tsx       # User Registration UI
-│   ├── topik/page.tsx          # TOPIK II Learning Center UI
-│   └── layout.tsx              # Root HTML layout with CSS design system
-├── components/
-│   └── layout/
-│       └── Shell.tsx           # Responsive shell (Desktop sidebar, mobile nav, theme switch)
-├── lib/
-│   ├── ai/
-│   │   └── provider.ts         # Gemini / Heuristic provider abstraction & prompt sanitization
-│   ├── auth.ts                 # Bcrypt hashing & jose JWT token signing
-│   ├── calculations/           # Pure, testable deterministic engines
-│   │   ├── discipline.ts       # Discipline score weights & formulas
-│   │   ├── finance.ts          # Dynamic daily limits & leap-year date logic
-│   │   ├── planner.ts          # Interval overlap & sleep conflict detection
-│   │   └── topik.ts            # SuperMemo-2 spaced repetition & score evaluation
-│   ├── prisma.ts               # Global Prisma client singleton
-│   └── session.ts              # Server-side cookie session reader
-├── middleware.ts               # Edge authentication guard
-└── styles/
-    └── globals.css             # Vanilla CSS design system, variables & glassmorphism
-```
+### 3. Domain and Libraries Layer (`src/lib`)
+Contains shared infrastructure and pure domain logic:
+- `src/lib/calculations/`: Deterministic calculation engines for finance, discipline, TOPIK SM-2, and planner schedule conflict detection.
+- `src/lib/auth.ts`: Bcrypt password hashing and JWT token management.
+- `src/lib/ai/provider.ts`: Google Gemini and heuristic decision support engines with prompt-injection defense.
+- `src/lib/prisma.ts`: Singleton database client.
+- `src/lib/session.ts`: Cookie-based session extraction.
+
+### 4. Database Layer (`prisma`)
+- `prisma/schema.prisma`: Defines entities and relationships.
+- `prisma/seed.ts`: Rich seed data with 500+ TOPIK words, grammar patterns, writing prompts, expense categories, and schedule templates.
+
+### 5. Test Suite (`tests`)
+Automated Vitest tests verifying calculation edge cases, cryptographic security, schedule conflict algorithms, and AI prompt sanitization.
 
 ---
 
-## 3. Data Model & Relationships
+## Domain Relationships
 
-```
-User (1) ──┬── (1) UserSettings
-           ├── (1) TimeSchedule
-           ├── (1) TopikGoal
-           ├── (*) Task ── (0..1) Goal
-           ├── (*) TimeBlock
-           ├── (*) RecurringRule
-           ├── (*) Reminder
-           ├── (*) Habit ── (*) HabitCompletion
-           ├── (*) DisciplineScore
-           ├── (*) Goal ── (*) Milestone
-           ├── (*) VocabReviewLog ── (1) TopikVocab
-           ├── (*) WritingPractice ── (1) WritingPrompt
-           ├── (*) MockExamResult ── (1) MockExam
-           ├── (*) StudySession
-           ├── (*) Expense ── (1) ExpenseCategory
-           ├── (*) Income
-           ├── (*) Budget
-           ├── (*) FinancialGoal
-           ├── (*) Notification
-           └── (*) AiLog
-```
+The conceptual flow is:
+
+`User → Preferences → Schedule → Tasks → Daily Execution`
+
+`User → TOPIK Goal → Study Plan → Vocabulary/Grammar/Reading/Listening/Writing → Results`
+
+`User → Habits → Completions → Streaks → Discipline Score`
+
+`User → Goals → Milestones → Daily Actions → Progress`
+
+`User → Income/Expenses → Budget → Spending Analysis → Financial Targets`
+
+`User → All Domains → AI Analysis → Recommendations → Explicit Confirmation → Changes`
 
 ---
 
-## 4. Security & Authentication Architecture
+## Important Invariants
 
-1. **Password Security**:
-   - `bcryptjs` with salt round 10.
-   - Plaintext passwords never stored or returned in any API response.
-2. **Session Handling**:
-   - JWT tokens signed with `HS256` using secret from environment variables (`JWT_SECRET`).
-   - Token payload: `{ userId, email, name }` with 7-day expiration.
-   - Transmitted via `httpOnly`, `secure` (in production), and `SameSite=Lax` cookies named `lifeos_session`.
-3. **Route Protection**:
-   - Next.js `middleware.ts` intercepts all requests to private routes (`/`, `/planner`, `/topik`, `/habits`, `/finance`, `/goals`, `/ai`, `/profile`, `/onboarding`).
-   - Unauthenticated visitors are automatically redirected to `/login`.
-4. **Prompt Injection Defenses**:
-   - Sanitizes user input in `src/lib/ai/provider.ts` to neutralize override prompts and embedded HTML/JS tags before evaluation.
-5. **Consequential Action Gate**:
-   - AI cannot alter user data unilaterally. Proposed actions emit a payload that requires explicit user confirmation before mutation.
+Planner:
+- No unintended overlapping time blocks.
+- Fixed events remain protected.
+- Sleep and recovery windows remain protected.
+- Rescheduling remains deterministic.
 
----
+Finance:
+- Calculations are deterministic.
+- Dates and remaining-day calculations are handled explicitly without NaN or division by zero.
+- No silent financial transactions.
 
-## 5. Verification & Testing Strategy
+Authentication:
+- Protected resources require valid sessions.
+- Authorization is checked server-side.
+- Secrets are never exposed to client code.
 
-- **Test Framework**: Vitest with Node.js environment.
-- **Unit & Calculation Suite**: Validates mathematical formulas (SM-2, financial dynamic limits, discipline scores, leap years, schedule conflicts).
-- **Cryptographic Suite**: Tests bcrypt hashing and token tampering rejections.
-- **Type Checking**: TypeScript strict mode (`tsc --noEmit`).
-- **Production Build**: Full compilation and static generation via `next build`.
-- **E2E Browser Validation**: Real browser session recording and visual layout confirmation.
+AI:
+- External and user content is untrusted.
+- Recommendations are separated from consequential actions.
+- Consequential changes require explicit confirmation.
