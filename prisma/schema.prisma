@@ -1,0 +1,510 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------------
+// USER & SETTINGS
+// -------------------------------------------------------------
+
+model User {
+  id               String          @id @default(cuid())
+  email            String          @unique
+  passwordHash     String
+  name             String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  settings         UserSettings?
+  timeSchedule     TimeSchedule?
+  tasks            Task[]
+  timeBlocks       TimeBlock[]
+  recurringRules   RecurringRule[]
+  reminders        Reminder[]
+  habits           Habit[]
+  habitCompletions HabitCompletion[]
+  disciplineScores DisciplineScore[]
+  goals            Goal[]
+  topikGoal        TopikGoal?
+  vocabReviews     VocabReviewLog[]
+  studySessions    StudySession[]
+  topikResults     TopikResult[]
+  writingPractices WritingPractice[]
+  mockExamResults  MockExamResult[]
+  incomes          Income[]
+  expenses         Expense[]
+  categories       ExpenseCategory[]
+  budgets          Budget[]
+  financialGoals   FinancialGoal[]
+  notifications    Notification[]
+  aiLogs           AiLog[]
+}
+
+model UserSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timezone             String   @default("Asia/Tashkent")
+  locale               String   @default("uz-UZ")
+  theme                String   @default("dark")
+  currency             String   @default("UZS")
+  onboardingCompleted  Boolean  @default(false)
+  notificationsEnabled Boolean  @default(true)
+  taskReminders        Boolean  @default(true)
+  studyReminders       Boolean  @default(true)
+  habitReminders       Boolean  @default(true)
+  expenseReminders     Boolean  @default(true)
+  reviewReminders      Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model TimeSchedule {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wakeTime       String   @default("06:30") // HH:mm
+  sleepTime      String   @default("23:00") // HH:mm
+  workStartTime  String   @default("09:00")
+  workEndTime    String   @default("18:00")
+  studyStartTime String   @default("19:00")
+  studyEndTime   String   @default("21:30")
+  fixedBlocksJson String  @default("[]") // JSON array of fixed weekly commitments
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// -------------------------------------------------------------
+// TASKS, TIME BLOCKS & SCHEDULE
+// -------------------------------------------------------------
+
+model Task {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  priority        String         @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status          String         @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, SKIPPED, RESCHEDULED
+  category        String         @default("GENERAL") // WORK, STUDY, PERSONAL, HEALTH, FINANCE
+  estimatedMinutes Int           @default(30)
+  actualMinutes   Int            @default(0)
+  dueDate         DateTime?
+  scheduledDate   DateTime?      // specific day for time-block
+  startTime       String?        // HH:mm
+  endTime         String?        // HH:mm
+  isFixed         Boolean        @default(false)
+  completedAt     DateTime?
+  skippedReason   String?
+  goalId          String?
+  goal            Goal?          @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  recurringRuleId String?
+  recurringRule   RecurringRule? @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+  timeBlocks      TimeBlock[]
+  reminders       Reminder[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model TimeBlock {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      String?
+  task        Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  title       String
+  date        String    // YYYY-MM-DD
+  startTime   String    // HH:mm
+  endTime     String    // HH:mm
+  type        String    @default("TASK") // TASK, FIXED, SLEEP, BREAK, TOPIK, MEAL
+  isCompleted Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model RecurringRule {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  frequency   String   @default("DAILY") // DAILY, WEEKDAYS, WEEKLY, MONTHLY
+  daysOfWeek  String   @default("[]")    // JSON array of integers [0..6]
+  startTime   String?  // HH:mm
+  durationMin Int      @default(30)
+  priority    String   @default("MEDIUM")
+  category    String   @default("GENERAL")
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      String?
+  task        Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title       String
+  remindAt    DateTime
+  type        String   @default("TASK") // TASK, HABIT, STUDY, FINANCE, SLEEP
+  isSent      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -------------------------------------------------------------
+// HABITS & DISCIPLINE
+// -------------------------------------------------------------
+
+model Habit {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  category    String            @default("HEALTH") // HEALTH, STUDY, DISCIPLINE, MINDFULNESS, FINANCE
+  frequency   String            @default("DAILY")  // DAILY, WEEKLY
+  targetDays  Int               @default(7)
+  icon        String            @default("check-circle")
+  color       String            @default("#10b981")
+  currentStreak Int             @default(0)
+  bestStreak  Int               @default(0)
+  archived    Boolean           @default(false)
+  completions HabitCompletion[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model HabitCompletion {
+  id          String   @id @default(cuid())
+  habitId     String
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        String   // YYYY-MM-DD
+  completed   Boolean  @default(true)
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+model DisciplineScore {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date             String   // YYYY-MM-DD
+  score            Float    // 0 to 100
+  tasksScore       Float    // Component score
+  habitsScore      Float    // Component score
+  studyScore       Float    // Component score
+  financeScore     Float    // Component score
+  explanationJson  String   // JSON string with detailed breakdown
+  createdAt        DateTime @default(now())
+
+  @@unique([userId, date])
+}
+
+// -------------------------------------------------------------
+// TOPIK PREPARATION SYSTEM
+// -------------------------------------------------------------
+
+model TopikGoal {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetLevel     Int      @default(5)     // TOPIK I: 1, 2; TOPIK II: 3, 4, 5, 6
+  targetScore     Int      @default(190)   // Out of 300 (or 200 for TOPIK I)
+  currentScore    Int      @default(120)
+  examDate        DateTime?
+  dailyVocabTarget Int     @default(20)
+  dailyStudyMinutes Int    @default(90)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TopikVocab {
+  id          String           @id @default(cuid())
+  korean      String           @unique
+  uzbek       String
+  hanja       String?
+  pos         String           @default("noun") // noun, verb, adjective, adverb, expression
+  level       Int              @default(3)      // 1 to 6
+  exampleKo   String
+  exampleUz   String
+  category    String           @default("GENERAL") // ACADEMIC, CULTURE, SCIENCE, SOCIETY, DAILY
+  reviews     VocabReviewLog[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model VocabReviewLog {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabId        String
+  vocab          TopikVocab @relation(fields: [vocabId], references: [id], onDelete: Cascade)
+  repetitions    Int        @default(0)
+  intervalDays   Int        @default(1)
+  easeFactor     Float      @default(2.5) // SM-2 algorithm
+  nextReviewDate DateTime   @default(now())
+  lastQuality    Int        @default(0)   // 0 to 5
+  incorrectCount Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([userId, vocabId])
+}
+
+model TopikGrammar {
+  id           String   @id @default(cuid())
+  pattern      String   @unique // e.g. -기 마련이다
+  meaningUz    String
+  level        Int      @default(3) // 1 to 6
+  explanation  String
+  usageNote    String?
+  examplesJson String   // JSON array of [{ ko: string, uz: string }]
+  practiceJson String   // JSON array of questions [{ question, options, answer, explanation }]
+  category     String   @default("INTERMEDIATE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TopikReading {
+  id            String   @id @default(cuid())
+  title         String
+  level         Int      @default(4)
+  passage       String
+  questionType  String   // MAIN_IDEA, DETAIL, BLANK, INFERENCE
+  questionsJson String   // JSON array of [{ id, question, options, answer, explanation }]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TopikListening {
+  id            String   @id @default(cuid())
+  title         String
+  level         Int      @default(4)
+  audioUrl      String?  // URL or built-in script text
+  script        String
+  questionsJson String   // JSON array of questions
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WritingPrompt {
+  id              String            @id @default(cuid())
+  promptNumber    Int               // 51, 52, 53, 54
+  title           String
+  description     String
+  instructions    String
+  sampleAnswer    String
+  rubricJson      String            // Scoring criteria
+  practices       WritingPractice[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model WritingPractice {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promptId     String
+  prompt       WritingPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  submission   String
+  selfScore    Int?
+  feedback     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model MockExam {
+  id            String            @id @default(cuid())
+  title         String            // e.g. "95th TOPIK II Full Mock Exam"
+  level         String            @default("TOPIK_II") // TOPIK_I, TOPIK_II
+  durationMin   Int               @default(180)
+  sectionsJson  String            // Listening, Writing, Reading questions
+  results       MockExamResult[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model MockExamResult {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mockExamId      String
+  mockExam        MockExam  @relation(fields: [mockExamId], references: [id], onDelete: Cascade)
+  listeningScore  Int       @default(0)
+  writingScore    Int       @default(0)
+  readingScore    Int       @default(0)
+  totalScore      Int       @default(0)
+  passedLevel     Int       @default(0)
+  weakAreasJson   String    // JSON array of identified weak points
+  answersJson     String    // detailed user answers
+  timeSpentMin    Int       @default(0)
+  createdAt       DateTime  @default(now())
+}
+
+model StudySession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   @default("TOPIK") // VOCAB, GRAMMAR, READING, LISTENING, WRITING, MOCK
+  durationMin Int
+  notes       String?
+  date        String   // YYYY-MM-DD
+  createdAt   DateTime @default(now())
+}
+
+model TopikResult {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examDate    String   // YYYY-MM-DD
+  examNumber  String?  // e.g. "91st TOPIK"
+  level       Int      // Achieved level
+  totalScore  Int
+  listening   Int
+  writing     Int
+  reading     Int
+  createdAt   DateTime @default(now())
+}
+
+// -------------------------------------------------------------
+// FINANCE SYSTEM
+// -------------------------------------------------------------
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  icon      String    @default("tag")
+  color     String    @default("#3b82f6")
+  isDefault Boolean   @default(false)
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, name])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amount      Float
+  date        String          // YYYY-MM-DD
+  description String?
+  isRecurring Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source      String
+  amount      Float
+  date        String   // YYYY-MM-DD
+  description String?
+  isRecurring Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month      String   // YYYY-MM
+  amount     Float    // Total allowed expense budget for month
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, month])
+}
+
+model FinancialGoal {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  targetDate    DateTime?
+  category      String   @default("SAVINGS") // SAVINGS, INVESTMENT, EMERGENCY, PURCHASE
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// -------------------------------------------------------------
+// GOALS & OKRs
+// -------------------------------------------------------------
+
+model Goal {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String      @default("CAREER") // CAREER, TOPIK, HEALTH, FINANCE, PERSONAL
+  timeframe   String      @default("MONTHLY") // LONG_TERM, ANNUAL, MONTHLY, WEEKLY
+  priority    String      @default("MEDIUM")  // LOW, MEDIUM, HIGH
+  status      String      @default("IN_PROGRESS") // NOT_STARTED, IN_PROGRESS, COMPLETED, ABANDONED
+  progress    Int         @default(0) // 0 to 100 percent
+  targetDate  DateTime?
+  tasks       Task[]
+  milestones  Milestone[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  goalId      String
+  goal        Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  title       String
+  targetDate  DateTime?
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// -------------------------------------------------------------
+// NOTIFICATIONS & AI ASSISTANT AUDIT
+// -------------------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, TASK, HABIT, TOPIK, FINANCE, SYSTEM
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model AiLog {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature        String   // SCHEDULE_ADVICE, TOPIK_ANALYSIS, FINANCE_REVIEW, DAILY_SUMMARY
+  prompt         String
+  response       String
+  requiresAction Boolean  @default(false)
+  actionPayload  String?  // JSON string of proposed action requiring user consent
+  isExecuted     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
