@@ -166,7 +166,8 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      userName: user.name,
+      userName: user.displayName || user.name,
+      dashboardWidgetsJson: user.settings?.dashboardWidgetsJson || '[]',
       dayProgressPercent,
       currentTask,
       nextTask,

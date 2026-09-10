@@ -277,6 +277,24 @@
 - [x] Final desktop verification
 - [x] Git working tree reviewed
 
+# Phase 14 — Profile & Personalization System
+
+- [x] Storage provider abstraction (local & cloud-ready)
+- [x] Database schema evolution (User extensions, ProfilePrivacy, AppearancePreferences)
+- [x] Profile information management (name, displayName, username, bio, occupation, education, location, birthday, phone)
+- [x] Profile header and cover hero (presets + custom cover upload with contrast scrim)
+- [x] Avatar customization (upload, preview, zoom/crop, remove, initials fallback, SVG presets)
+- [x] Global appearance & themes (dark/light/system, 6 accent colors, UI density, reduced motion)
+- [x] Granular privacy controls (email, phone, location, birthday, stats, goals, topik, discipline)
+- [x] Real profile statistics engine (pure DB aggregations, no mock numbers)
+- [x] Profile completion scoring engine and actionable missing checklist
+- [x] Dashboard personalization (reorder & toggle widgets visibility, personalized greeting)
+- [x] Data management (structured JSON export, secure account deletion)
+- [x] Security validation, input sanitization, and username uniqueness/safety
+- [x] AI personalization integration (contextual preferences)
+- [x] Comprehensive automated test suite for profile & personalization
+- [x] End-to-end verification, typecheck, and production build
+
 ---
 
 # Definition of Done
@@ -285,7 +303,8 @@ The project is complete only when all applicable tasks are `[x]`, required valid
 
 ## Progress
 
-- Completed: 147
+- Completed: 161
 - In progress: 0
 - Blocked: 0
-- Remaining: 0 (All 14 phases 100% complete and verified)
+- Remaining: 0
+

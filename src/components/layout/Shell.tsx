@@ -34,9 +34,42 @@ export default function Shell({ children }: ShellProps) {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [userProfile, setUserProfile] = useState<{
     name: string;
+    displayName?: string | null;
+    username?: string | null;
     email: string;
     avatar?: string | null;
+    coverPreset?: string | null;
+    settings?: {
+      theme?: string;
+      accentColor?: string;
+      uiDensity?: string;
+      reducedMotion?: boolean;
+    } | null;
   } | null>(null);
+
+  const applyAppearance = (settings?: { theme?: string; accentColor?: string; uiDensity?: string; reducedMotion?: boolean } | null) => {
+    // 1. Theme
+    const savedTheme = localStorage.getItem('lifeos_theme') || settings?.theme || 'dark';
+    let effectiveTheme = savedTheme;
+    if (savedTheme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      effectiveTheme = prefersDark ? 'dark' : 'light';
+    }
+    setTheme((effectiveTheme === 'light' ? 'light' : 'dark'));
+    document.documentElement.setAttribute('data-theme', effectiveTheme);
+
+    // 2. Accent color
+    const accent = settings?.accentColor || localStorage.getItem('lifeos_accent') || 'indigo';
+    document.documentElement.setAttribute('data-accent', accent);
+
+    // 3. UI Density
+    const density = settings?.uiDensity || localStorage.getItem('lifeos_density') || 'comfortable';
+    document.documentElement.setAttribute('data-density', density);
+
+    // 4. Reduced Motion
+    const reducedMotion = settings?.reducedMotion ?? (localStorage.getItem('lifeos_reduced_motion') === 'true');
+    document.documentElement.setAttribute('data-reduced-motion', reducedMotion ? 'true' : 'false');
+  };
 
   const fetchUserData = async () => {
     try {
@@ -45,10 +78,12 @@ export default function Shell({ children }: ShellProps) {
         const data = await res.json();
         if (data.user) {
           setUserProfile(data.user);
+          applyAppearance(data.user.settings);
         }
       }
     } catch {
-      // ignore
+      // fallback to local stored
+      applyAppearance(null);
     }
   };
 
@@ -66,17 +101,22 @@ export default function Shell({ children }: ShellProps) {
     return name.slice(0, 2).toUpperCase();
   };
 
-  useEffect(() => {
-    const savedTheme = (localStorage.getItem('lifeos_theme') as 'dark' | 'light') || 'dark';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
+  const toggleTheme = async () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('lifeos_theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
+
+    // Sync to user settings silently
+    try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: { theme: newTheme } }),
+      });
+    } catch {
+      // ignore
+    }
   };
 
   const handleLogout = async () => {
@@ -247,11 +287,17 @@ export default function Shell({ children }: ShellProps) {
                   maxWidth: '120px',
                 }}
               >
-                {userProfile?.name || 'Foydalanuvchi'}
+                {userProfile?.displayName || userProfile?.name || 'Foydalanuvchi'}
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--accent-success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-success)', display: 'inline-block' }}></span>
-                Faol
+              <div style={{ fontSize: '0.72rem', color: userProfile?.username ? 'var(--text-muted)' : 'var(--accent-success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {userProfile?.username ? (
+                  <span>@{userProfile.username}</span>
+                ) : (
+                  <>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-success)', display: 'inline-block' }}></span>
+                    Faol
+                  </>
+                )}
               </div>
             </div>
           </Link>
@@ -470,7 +516,7 @@ export default function Shell({ children }: ShellProps) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {userProfile?.name?.split(' ')[0] || 'Profil'}
+                {(userProfile?.displayName || userProfile?.name || 'Profil').split(' ')[0]}
               </span>
             </Link>
           </div>

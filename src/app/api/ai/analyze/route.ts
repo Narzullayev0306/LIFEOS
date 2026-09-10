@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       include: {
         topikGoal: true,
         timeSchedule: true,
+        settings: true,
       },
     });
 
@@ -69,6 +70,14 @@ export async function POST(req: Request) {
       feature,
       userData: {
         tasks,
+        userName: user?.displayName || user?.name,
+        timezone: user?.settings?.timezone,
+        occupation: user?.occupation,
+        education: user?.education,
+        wakeTime: user?.timeSchedule?.wakeTime,
+        sleepTime: user?.timeSchedule?.sleepTime,
+        studyStartTime: user?.timeSchedule?.studyStartTime,
+        studyEndTime: user?.timeSchedule?.studyEndTime,
         topikGoal: user?.topikGoal,
         dailyLimit,
         todayExpensesTotal,

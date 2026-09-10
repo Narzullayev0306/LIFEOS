@@ -401,3 +401,123 @@ a:hover {
 .pulse-glow {
   animation: pulseGlow 2.5s infinite;
 }
+
+/* ============================================================
+   ACCENT COLOR THEMES
+   ============================================================ */
+
+[data-accent="indigo"] {
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-primary-light: rgba(99, 102, 241, 0.15);
+  --border-accent: rgba(99, 102, 241, 0.4);
+}
+
+[data-accent="violet"] {
+  --accent-primary: #8b5cf6;
+  --accent-primary-hover: #7c3aed;
+  --accent-primary-light: rgba(139, 92, 246, 0.15);
+  --border-accent: rgba(139, 92, 246, 0.4);
+}
+
+[data-accent="emerald"] {
+  --accent-primary: #10b981;
+  --accent-primary-hover: #059669;
+  --accent-primary-light: rgba(16, 185, 129, 0.15);
+  --border-accent: rgba(16, 185, 129, 0.4);
+}
+
+[data-accent="amber"] {
+  --accent-primary: #f59e0b;
+  --accent-primary-hover: #d97706;
+  --accent-primary-light: rgba(245, 158, 11, 0.15);
+  --border-accent: rgba(245, 158, 11, 0.4);
+}
+
+[data-accent="rose"] {
+  --accent-primary: #f43f5e;
+  --accent-primary-hover: #e11d48;
+  --accent-primary-light: rgba(244, 63, 94, 0.15);
+  --border-accent: rgba(244, 63, 94, 0.4);
+}
+
+[data-accent="cyan"] {
+  --accent-primary: #06b6d4;
+  --accent-primary-hover: #0891b2;
+  --accent-primary-light: rgba(6, 182, 212, 0.15);
+  --border-accent: rgba(6, 182, 212, 0.4);
+}
+
+/* ============================================================
+   UI DENSITY & ACCESSIBILITY
+   ============================================================ */
+
+[data-density="compact"] {
+  --header-height: 54px;
+}
+
+[data-density="compact"] .glass-card {
+  padding: 1rem;
+}
+
+[data-density="compact"] .btn {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+[data-density="compact"] .input,
+[data-density="compact"] .select,
+[data-density="compact"] .textarea {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ============================================================
+   PROFILE COVER PRESETS & HERO
+   ============================================================ */
+
+.cover-preset-minimal {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.cover-preset-aurora {
+  background: linear-gradient(135deg, #064e3b 0%, #0d9488 40%, #1e1b4b 100%);
+}
+
+.cover-preset-midnight {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #090d16 100%);
+}
+
+.cover-preset-abstract {
+  background: linear-gradient(135deg, #701a75 0%, #831843 45%, #1e1b4b 100%);
+}
+
+.cover-preset-productivity {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 60%, #0f172a 100%);
+}
+
+.cover-preset-study {
+  background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #1e1b4b 100%);
+}
+
+.cover-preset-calm {
+  background: linear-gradient(135deg, #134e4a 0%, #059669 50%, #042f2e 100%);
+}
+
+.cover-scrim {
+  background: linear-gradient(180deg, rgba(9, 13, 22, 0.2) 0%, rgba(9, 13, 22, 0.75) 75%, var(--bg-card) 100%);
+}
+
+.cover-scrim-light {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.85) 80%, var(--bg-card) 100%);
+}
+

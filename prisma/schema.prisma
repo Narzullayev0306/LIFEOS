@@ -16,12 +16,22 @@ model User {
   email            String          @unique
   passwordHash     String
   name             String
+  username         String?         @unique
+  displayName      String?
   avatar           String?
+  coverImage       String?
+  coverPreset      String?         @default("midnight")
   bio              String?
+  occupation       String?
+  education        String?
+  location         String?
+  birthday         String?
+  phone            String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
   settings         UserSettings?
+  privacy          ProfilePrivacy?
   timeSchedule     TimeSchedule?
   tasks            Task[]
   timeBlocks       TimeBlock[]
@@ -46,6 +56,25 @@ model User {
   aiLogs           AiLog[]
 }
 
+model ProfilePrivacy {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showEmail      Boolean  @default(false)
+  showPhone      Boolean  @default(false)
+  showLocation   Boolean  @default(true)
+  showBirthday   Boolean  @default(false)
+  showOccupation Boolean  @default(true)
+  showEducation  Boolean  @default(true)
+  showStatistics Boolean  @default(true)
+  showGoals      Boolean  @default(true)
+  showTopik      Boolean  @default(true)
+  showDiscipline Boolean  @default(true)
+  showActivity   Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model UserSettings {
   id                   String   @id @default(cuid())
   userId               String   @unique
@@ -53,7 +82,11 @@ model UserSettings {
   timezone             String   @default("Asia/Tashkent")
   locale               String   @default("uz-UZ")
   theme                String   @default("dark")
+  accentColor          String   @default("indigo")
+  uiDensity            String   @default("comfortable")
+  reducedMotion        Boolean  @default(false)
   currency             String   @default("UZS")
+  dashboardWidgetsJson String   @default("[]")
   onboardingCompleted  Boolean  @default(false)
   notificationsEnabled Boolean  @default(true)
   taskReminders        Boolean  @default(true)

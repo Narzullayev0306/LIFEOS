@@ -35,3 +35,8 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch & uploads
+scratch/
+public/uploads/
+uploads/
